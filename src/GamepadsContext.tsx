@@ -5,20 +5,34 @@ import React, {
   useRef,
   useState,
 } from 'react';
-const GamepadsContext = createContext({});
 
 interface GamepadsProviderProps {
   children: React.ReactNode;
 }
 
+interface GamepadsState {
+  [key: number]: {
+    buttons: readonly GamepadButton[];
+    id: string;
+    axes: readonly number[];
+  };
+}
+
+interface GamepadsContext {
+  gamepads: GamepadsState;
+  setGamepads: React.Dispatch<React.SetStateAction<GamepadsState>>;
+}
+
+const GamepadsContext = createContext({});
+
 const GamepadsProvider = ({ children }: GamepadsProviderProps) => {
-  const [gamepads, setGamepads] = useState({});
+  const [gamepads, setGamepads] = useState<GamepadsState>({});
   const requestRef = useRef<number>();
 
-  var haveEvents = 'ongamepadconnected' in window;
+  let haveEvents = 'ongamepadconnected' in window;
 
   const addGamepad = useCallback(
-    gamepad => {
+    (gamepad: Gamepad) => {
       setGamepads({
         ...gamepads,
         [gamepad.index]: {
@@ -47,16 +61,16 @@ const GamepadsProvider = ({ children }: GamepadsProviderProps) => {
    */
   const scanGamepads = useCallback(() => {
     // Grab gamepads from browser API
-    var detectedGamepads = navigator.getGamepads
+    let detectedGamepads = navigator.getGamepads
       ? navigator.getGamepads()
       : navigator.webkitGetGamepads
       ? navigator.webkitGetGamepads()
       : [];
 
     // Loop through all detected controllers and add if not already in state
-    for (var i = 0; i < detectedGamepads.length; i++) {
-      if (detectedGamepads[i]) {
-        addGamepad(detectedGamepads[i]);
+    for (let i = 0; i < detectedGamepads.length; i++) {
+      if (detectedGamepads[i] !== null) {
+        addGamepad(detectedGamepads[i] as Gamepad);
       }
     }
   }, [addGamepad]);
